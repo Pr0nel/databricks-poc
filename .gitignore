@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+venv/
+
+# Environment
+.env
+.env.development
+.env.production
+
+# Logs
+logs/
+
+# Spark
+spark_checkpoints/
+delta_tables/
+metastore_db/

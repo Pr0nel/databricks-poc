@@ -1,0 +1,40 @@
+# AWS Configuration
+aws:
+  access_key_id: ${AWS_ACCESS_KEY_ID}
+  secret_key: ${AWS_SECRET_ACCESS_KEY}
+  region: us-east-2
+  s3:
+    bucket: ${AWS_S3_BUCKET}
+    paths:
+      bronze: bronze
+      silver: silver
+      gold: gold
+      schemas: _schemas
+
+# Kafka Configuration
+kafka:
+  bootstrap_servers: localhost:9092
+  topic: test-events
+  group_id: lakehouse-poc-group
+  auto_offset_reset: earliest
+
+# Databricks Configuration
+databricks:
+  host: ${DATABRICKS_HOST}
+  token: ${DATABRICKS_TOKEN}
+
+# Spark Configuration
+spark:
+  app_name: lakehouse-poc
+  log_level: WARN
+  sql_extensions: io.delta.sql.DeltaSparkSessionExtension
+  catalog: org.apache.spark.sql.delta.catalog.DeltaCatalog
+
+# Pipeline Configuration
+pipeline:
+  timeouts:
+    setup_s3: 60          # S3 setup es rápido
+    kafka_producer: 180   # 50 eventos @ 0.5s cada uno
+    spark_consumer: 300   # Spark tarda en iniciar (JVM overhead)
+  max_retries: 3
+  retry_delay_base: 5    # Segundos entre reintentos

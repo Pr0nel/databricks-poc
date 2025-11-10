@@ -1,0 +1,17 @@
+
+# docker-compose.dev.yml
+# Development override: sin persistencia, sin health checks estrictos
+# Uso: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+
+services:
+  zookeeper:
+    # Sin volúmenes (datos en memoria)
+    volumes: []
+    # Sin restart automático
+    restart: "no"
+  
+  kafka:
+    # Sin volúmenes (datos en memoria)
+    volumes: []
+    # Sin restart automático
+    restart: "no"
