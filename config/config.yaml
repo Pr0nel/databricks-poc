@@ -34,10 +34,10 @@ spark:
 # Pipeline Configuration
 pipeline:
   timeouts:
-    setup_s3: 60          # S3 setup es rápido
+    setup_s3: 60          # S3 setup
     kafka_producer: 180   # 50 eventos @ 0.5s cada uno
     spark_consumer: 300   # Spark tarda en iniciar (JVM overhead)
     spark_delta: 300      # Spark con Delta Lake
-    spark_validator: 300  # Validaciones rápidas
+    spark_validator: 300  # Validaciones
   max_retries: 3
   retry_delay_base: 5     # Segundos entre reintentos

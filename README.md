@@ -229,6 +229,9 @@ python3 run_pipeline.py
 ### Ejecución de Componentes Individuales
 
 ```bash
+# Solo Validación de infraestructura
+python3 scripts/validate_infrastructure.py
+
 # Solo Producer (generar eventos)
 python3 scripts/kafka_producer.py
 
@@ -238,7 +241,7 @@ python3 pyspark-jobs/01_spark_kafka_consumer.py
 # Solo Batch (persistir a S3)
 python3 pyspark-jobs/02_spark_delta_to_s3.py
 
-# Solo Validación
+# Solo Validación de datos
 python3 pyspark-jobs/03_spark_s3_validator.py
 ```
 
