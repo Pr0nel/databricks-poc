@@ -47,32 +47,34 @@
 ### Diagrama General
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    LAKEHOUSE HÍBRIDO                        │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  CAPA 1: INGESTA (Docker Local - Streaming)                 │
-│  ┌───────────────────────────────────────────────────────┐  │
+┌───────────────────────────────────────────────────────────────┐
+│                       LAKEHOUSE HÍBRIDO                       │
+├───────────────────────────────────────────────────────────────┤
+│                                                               │
+│  CAPA 1: INGESTA (Docker Local - Streaming)                   │
+│  ┌─────────────────────────────────────────────────────────┐  │
 │  │ Kafka (localhost:9092) -> Spark Consumer -> Delta LOCAL │  │
-│  │ └─ Formato: JSON                                      │  │
-│  │ └─ Frecuencia: Micro-batches (5s)                     │  │
-│  └───────────────────────────────────────────────────────┘  │
-│                           ↓                                 │
-│  CAPA 2: ALMACENAMIENTO (Batch - Persistencia)              │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │ Delta LOCAL -> S3 Parquet (particionado por fecha)     │  │
-│  │ └─ Formato: Parquet                                   │  │
-│  │ └─ Particionado: ingestion_date                       │  │
-│  └───────────────────────────────────────────────────────┘  │
-│                           ↓                                 │
-│  CAPA 3: TRANSFORMACIÓN (Databricks Cloud)                  │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │ Auto Loader S3 -> Bronze -> Silver -> Gold               │  │
-│  │ └─ Schema Evolution automática                        │  │
-│  │ └─ Unity Catalog (gobernanza)                         │  │
-│  └───────────────────────────────────────────────────────┘  │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
+│  │ └─ Formato: JSON                                        │  │
+│  │ └─ Frecuencia: Micro-batches (5s)                       │  │
+│  └─────────────────────────────────────────────────────────┘  │
+│                              |                                │
+│                              v                                │
+│  CAPA 2: ALMACENAMIENTO (Batch - Persistencia)                │
+│  ┌─────────────────────────────────────────────────────────┐  │
+│  │ Delta LOCAL -> S3 Parquet (particionado por fecha)      │  │
+│  │ └─ Formato: Parquet                                     │  │
+│  │ └─ Particionado: ingestion_date                         │  │
+│  └─────────────────────────────────────────────────────────┘  │
+│                              |                                │
+│                              v                                │
+│  CAPA 3: TRANSFORMACIÓN (Databricks Cloud)                    │
+│  ┌─────────────────────────────────────────────────────────┐  │
+│  │ Auto Loader S3 -> Bronze -> Silver -> Gold              │  │
+│  │ └─ Schema Evolution automática                          │  │
+│  │ └─ Unity Catalog (gobernanza)                           │  │
+│  └─────────────────────────────────────────────────────────┘  │
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
 ```
 
 ---
