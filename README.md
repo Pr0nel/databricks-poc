@@ -280,6 +280,7 @@ databricks-poc/
 ├─ utils/                           <- Módulos reutilizables
 │  ├─ __init__.py
 │  ├─ data_validators.py            (validaciones comunes)
+│  ├─ encoding_utils.py             (MessageEncoder UTF-8)
 │  ├─ health_check.py               (health checks)
 │  ├─ retry_logic.py                (políticas de retry)
 │  ├─ schema_definitions.py         (schemas centralizados)
@@ -291,9 +292,9 @@ databricks-poc/
 │  └─ docker-helpers.sh             (CLI Docker)
 │
 ├─ pyspark-jobs/                    <- Jobs de Spark
-│  ├─ 01_spark_kafka_consumer.py    (Kafka -> Delta)
-│  ├─ 02_spark_delta_to_s3.py       (Delta -> S3)
-│  └─ 03_spark_s3_validator.py      (Validar S3)
+│  ├─ 01_spark_kafka_consumer.py    (Kafka -> Delta) Streaming
+│  ├─ 02_spark_write_delta_s3.py    (Delta -> S3) Batch
+│  └─ 03_spark_s3_validator.py      (Validar S3) Quality Checks
 │
 ├─ notebooks/                       <- Notebooks Databricks
 │  ├─ 01_auto_loader_setup.py
@@ -307,9 +308,10 @@ databricks-poc/
 ├─ logs/                            <- Logs rotados
 │  ├─ kafka_producer.log
 │  ├─ orchestrator.log
-│  ├─ spark_kafka_consumer.log
 │  ├─ setup_s3.log
-│  └─ ...
+│  ├─ spark_kafka_consumer.log
+│  ├─ spark_write_delta_s3.log
+│  └─ spark_s3_validator.log
 │
 ├─ spark_checkpoints/               <- Checkpoints de Spark
 │  ├─ delta_consumer/
@@ -320,7 +322,7 @@ databricks-poc/
 │
 ├─ requirements.txt                 <- Dependencias Python
 ├─ .env                             <- Template de variables
-├─ .gitignore
+├─ .gitignore                       <- Template de archivos y carpetas no subidos a github
 ├─ LICENSE                          <- Licencia
 ├─ README.md                        <- Este archivo
 └─ run_pipeline.py                  <- Orquestador principal
@@ -339,21 +341,24 @@ Verificar que todos los servicios están disponibles:
 
 ### ETAPA 1: Setup Inicial
 Preparar código base sin ejecutar:
-- Docker setup
+- Docker Compose
 - AWS S3 config
 - Databricks setup
 
 ### ETAPA 2: Docker Kafka
 Levantar Kafka y validar:
-- Kafka cluster
+- Kafka + Zookeeper cluster
 - Producer de eventos
-- Kafka topics
+- Creación de Kafka topics
+- Health checks
 
 ### ETAPA 3: Spark Streaming
 Implementar pipeline local:
-- `01_spark_kafka_consumer.py`: Kafka -> Delta
-- `02_spark_delta_to_s3.py`:    Delta -> S3
-- `03_spark_s3_validator.py`:   Validación
+- Kafka Consumer
+- JSON Parsing
+- Escritura de Delta (local)
+- Escritura parquet en S3
+- Validaciones
 
 ### ETAPA 4: Databricks Auto Loader
 Implementar transformaciones cloud:
