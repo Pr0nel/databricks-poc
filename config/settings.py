@@ -40,6 +40,7 @@ S3_SCHEMAS = S3_PATHS['schemas']
 
 KAFKA_BOOTSTRAP_SERVERS = config["kafka"]["bootstrap_servers"]
 KAFKA_TOPIC = config["kafka"]["topic"]
+KAFKA_ENCODING = config["kafka"]["encoding"]
 KAFKA_GROUP_ID = config["kafka"]["group_id"]
 KAFKA_AUTO_OFFSET_RESET = config["kafka"]["auto_offset_reset"]
 
@@ -53,6 +54,8 @@ PIPELINE_TIMEOUTS = {
     "setup_s3": int(os.getenv("PIPELINE_SETUP_TIMEOUT", config["pipeline"]["timeouts"]["setup_s3"])),
     "kafka_producer": int(os.getenv("PIPELINE_PRODUCER_TIMEOUT", config["pipeline"]["timeouts"]["kafka_producer"])),
     "spark_consumer": int(os.getenv("PIPELINE_CONSUMER_TIMEOUT", config["pipeline"]["timeouts"]["spark_consumer"])),
+    "spark_delta": int(os.getenv("PIPELINE_DELTA_TIMEOUT", config["pipeline"]["timeouts"]["spark_delta"])),
+    "spark_validator": int(os.getenv("PIPELINE_VALIDATOR_TIMEOUT", config["pipeline"]["timeouts"]["spark_validator"]))
 }
 
 PIPELINE_MAX_RETRIES = int(os.getenv("PIPELINE_MAX_RETRIES", config["pipeline"]["max_retries"]))

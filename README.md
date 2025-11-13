@@ -17,8 +17,13 @@
 - [Estructura del Proyecto](#estructura-del-proyecto)
 - [Etapas de Implementación](#etapas-de-implementación)
 - [Troubleshooting](#troubleshooting)
+- [Métricas y Monitoreo](#métricas-y-monitoreo)
 - [Contribuciones](#contribuciones)
+- [Recursos Adicionales](#recursos-adicionales)
 - [Licencia](#licencia)
+- [Autor](#autor)
+- [Próximos Pasos](#próximos-pasos)
+- [Changelog](#changelog)
 
 ---
 
@@ -26,12 +31,12 @@
 
 **Lakehouse POC** es una prueba de concepto que demuestra una arquitectura **data lakehouse híbrida** local + cloud, combinando:
 
-- ✅ **Streaming en tiempo real** con Apache Kafka
-- ✅ **Delta Lake** para ACID transactions y time travel
-- ✅ **Arquitectura Medallion** (Bronze → Silver → Gold)
-- ✅ **Cloud Storage** (AWS S3)
-- ✅ **Databricks Integration** con Unity Catalog y Auto Loader
-- ✅ **Gobernanza de datos** y esquemas evolucionables
+- **Streaming en tiempo real** con Apache Kafka
+- **Delta Lake** para ACID transactions y time travel
+- **Arquitectura Medallion** (Bronze -> Silver -> Gold)
+- **Cloud Storage** (AWS S3)
+- **Databricks Integration** con Unity Catalog y Auto Loader
+- **Gobernanza de datos** y esquemas evolucionables
 
 **Propósito:** Demostrar patrones enterprise reales de ingesta, transformación y gobernanza de datos.
 
@@ -42,32 +47,32 @@
 ### Diagrama General
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│                    LAKEHOUSE HÍBRIDO                         │
-├──────────────────────────────────────────────────────────────┤
-│                                                              │
-│  CAPA 1: INGESTA (Docker Local - Streaming)                  │
-│  ┌────────────────────────────────────────────────────────┐  │
-│  │ Kafka (localhost:9092) → Spark Consumer → Delta LOCAL  │  │
-│  │ └─ Formato: JSON                                       │  │
-│  │ └─ Frecuencia: Micro-batches (5s)                      │  │
-│  └────────────────────────────────────────────────────────┘  │
-│                           ↓                                  │
-│  CAPA 2: ALMACENAMIENTO (Batch - Persistencia)               │
-│  ┌────────────────────────────────────────────────────────┐  │
-│  │ Delta LOCAL → S3 Parquet (particionado por fecha)      │  │
-│  │ └─ Formato: Parquet                                    │  │
-│  │ └─ Particionado: ingestion_date                        │  │
-│  └────────────────────────────────────────────────────────┘  │
-│                           ↓                                  │
-│  CAPA 3: TRANSFORMACIÓN (Databricks Cloud)                   │
-│  ┌────────────────────────────────────────────────────────┐  │
-│  │ Auto Loader S3 → Bronze → Silver → Gold                │  │
-│  │ └─ Schema Evolution automática                         │  │
-│  │ └─ Unity Catalog (gobernanza)                          │  │
-│  └────────────────────────────────────────────────────────┘  │
-│                                                              │
-└──────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                    LAKEHOUSE HÍBRIDO                        │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  CAPA 1: INGESTA (Docker Local - Streaming)                 │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │ Kafka (localhost:9092) -> Spark Consumer -> Delta LOCAL │  │
+│  │ └─ Formato: JSON                                      │  │
+│  │ └─ Frecuencia: Micro-batches (5s)                     │  │
+│  └───────────────────────────────────────────────────────┘  │
+│                           ↓                                 │
+│  CAPA 2: ALMACENAMIENTO (Batch - Persistencia)              │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │ Delta LOCAL -> S3 Parquet (particionado por fecha)     │  │
+│  │ └─ Formato: Parquet                                   │  │
+│  │ └─ Particionado: ingestion_date                       │  │
+│  └───────────────────────────────────────────────────────┘  │
+│                           ↓                                 │
+│  CAPA 3: TRANSFORMACIÓN (Databricks Cloud)                  │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │ Auto Loader S3 -> Bronze -> Silver -> Gold               │  │
+│  │ └─ Schema Evolution automática                        │  │
+│  │ └─ Unity Catalog (gobernanza)                         │  │
+│  └───────────────────────────────────────────────────────┘  │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -112,7 +117,7 @@
 ### 1. Clonar Repositorio
 
 ```bash
-git clone https://github.com/tu-usuario/databricks-poc.git
+git clone https://github.com/Pr0nel/databricks-poc.git
 cd databricks-poc
 ```
 
@@ -132,15 +137,12 @@ pip install -r requirements.txt
 ### 4. Configurar Variables de Entorno
 
 ```bash
-cp .env.example .env
-# Editar .env con tus credenciales
-```
-
-```bash
 # .env
 AWS_ACCESS_KEY_ID=your_access_key
 AWS_SECRET_ACCESS_KEY=your_secret_key
 AWS_S3_BUCKET=your-lakehouse-poc-bucket
+KAFKA_BOOTSTRAP_SERVERS=localhost:
+KAFKA_TOPIC=test-events
 DATABRICKS_HOST=https://your-workspace.databricks.com
 DATABRICKS_TOKEN=your_pat_token
 ```
@@ -149,7 +151,7 @@ DATABRICKS_TOKEN=your_pat_token
 
 ## ⚙️ Configuración
 
-### Validar Infraestructura (ETAPA 0)
+### Validar Infraestructura
 
 ```bash
 # Verificar Python y dependencias
@@ -185,7 +187,7 @@ scripts/docker-helpers.sh test-kafka
 # Asegúrate de que Docker está activo
 scripts/docker-helpers.sh dev-up
 
-# Ejecutar todo (5 etapas)
+# Ejecutar todo
 python3 run_pipeline.py
 ```
 
@@ -205,11 +207,11 @@ python3 run_pipeline.py
     Fallidos: 0/50
 
 [PASO 3/5] Spark Streaming Consumer
-    Streaming: Kafka → Delta LOCAL (120 segundos) - EXITOSO
+    Streaming: Kafka -> Delta LOCAL (120 segundos) - EXITOSO
     Filas en Delta: 50
 
 [PASO 4/5] Spark Batch Writer
-    Batch: Delta LOCAL → S3 Parquet - EXITOSO
+    Batch: Delta LOCAL -> S3 Parquet - EXITOSO
     Datos escritos a S3 exitosamente
 
 [PASO 5/5] Spark S3 Validator
@@ -270,30 +272,30 @@ scripts/docker-helpers.sh help
 ```
 databricks-poc/
 │
-├─ config/                          ← Configuración centralizada
+├─ config/                          <- Configuración centralizada
 │  ├─ config.yaml                   (vars de entorno)
 │  ├─ settings.py                   (parser de config)
 │  └─ logging_config.py             (setup de logging)
 │
-├─ utils/                           ← Módulos reutilizables
+├─ utils/                           <- Módulos reutilizables
 │  ├─ __init__.py
+│  ├─ data_validators.py            (validaciones comunes)
 │  ├─ health_check.py               (health checks)
-│  ├─ spark_utils.py                (factory SparkSession)
 │  ├─ retry_logic.py                (políticas de retry)
-│  ├─ schema_definitions.py          (schemas centralizados)
-│  └─ data_validators.py            (validaciones comunes)
+│  ├─ schema_definitions.py         (schemas centralizados)
+│  └─ spark_utils.py                (factory SparkSession)
 │
-├─ scripts/                         ← Herramientas de desarrollo
+├─ scripts/                         <- Herramientas de desarrollo
 │  ├─ kafka_producer.py             (genera eventos a Kafka)
 │  ├─ setup_s3.py                   (estructura S3)
 │  └─ docker-helpers.sh             (CLI Docker)
 │
-├─ pyspark-jobs/                    ← Jobs de Spark
-│  ├─ 01_spark_kafka_consumer.py    (Kafka → Delta)
-│  ├─ 02_spark_delta_to_s3.py       (Delta → S3)
+├─ pyspark-jobs/                    <- Jobs de Spark
+│  ├─ 01_spark_kafka_consumer.py    (Kafka -> Delta)
+│  ├─ 02_spark_delta_to_s3.py       (Delta -> S3)
 │  └─ 03_spark_s3_validator.py      (Validar S3)
 │
-├─ notebooks/                       ← Notebooks Databricks (ETAPA 4)
+├─ notebooks/                       <- Notebooks Databricks
 │  ├─ 01_auto_loader_setup.py
 │  ├─ 02_auto_loader_bronze.py
 │  └─ 03_schema_evolution_test.py
@@ -302,69 +304,70 @@ databricks-poc/
 │  ├─ docker-compose.yml            (config principal)
 │  └─ docker-compose.dev.yml        (override desarrollo)
 │
-├─ logs/                            ← Logs rotados
-│  ├─ orchestrator.log
+├─ logs/                            <- Logs rotados
 │  ├─ kafka_producer.log
+│  ├─ orchestrator.log
 │  ├─ spark_kafka_consumer.log
+│  ├─ setup_s3.log
 │  └─ ...
 │
-├─ spark_checkpoints/               ← Checkpoints de Spark
+├─ spark_checkpoints/               <- Checkpoints de Spark
 │  ├─ delta_consumer/
 │  └─ s3_consumer/
 │
-├─ delta_tables/                    ← Delta local (temporal)
+├─ delta_tables/                    <- Delta local (temporal)
 │  └─ events_raw/
 │
-├─ requirements.txt                 ← Dependencias Python
-├─ .env                             ← Template de variables
+├─ requirements.txt                 <- Dependencias Python
+├─ .env                             <- Template de variables
 ├─ .gitignore
-├─ LICENSE
-├─ README.md                        ← Este archivo
-└─ run_pipeline.py                  ← Orquestador principal
+├─ LICENSE                          <- Licencia
+├─ README.md                        <- Este archivo
+└─ run_pipeline.py                  <- Orquestador principal
 ```
 
 ---
 
 ## 📊 Etapas de Implementación
 
-### ✅ ETAPA 0: Validación de Infraestructura
+### ETAPA 0: Validación de Infraestructura
 Verificar que todos los servicios están disponibles:
 - Databricks Serverless
 - AWS S3 + IAM
 - Docker + Kafka
 - Spark local + Delta
 
-### ✅ ETAPA 1: Setup Inicial
+### ETAPA 1: Setup Inicial
 Preparar código base sin ejecutar:
 - Docker setup
 - AWS S3 config
 - Databricks setup
 
-### ✅ ETAPA 2: Docker Kafka
+### ETAPA 2: Docker Kafka
 Levantar Kafka y validar:
 - Kafka cluster
 - Producer de eventos
 - Kafka topics
 
-### ✅ ETAPA 3: Spark Streaming (ACTUAL)
+### ETAPA 3: Spark Streaming
 Implementar pipeline local:
-- `01_spark_kafka_consumer.py`: Kafka → Delta
-- `02_spark_delta_to_s3.py`: Delta → S3
-- `03_spark_s3_validator.py`: Validación
+- `01_spark_kafka_consumer.py`: Kafka -> Delta
+- `02_spark_delta_to_s3.py`:    Delta -> S3
+- `03_spark_s3_validator.py`:   Validación
 
-### ⏳ ETAPA 4: Databricks Auto Loader
+### ETAPA 4: Databricks Auto Loader
 Implementar transformaciones cloud:
 - Auto Loader setup
 - Schema evolution
 - Unity Catalog
 
-### ⏳ ETAPA 5: Transformaciones Medallion
+### ETAPA 5: Transformaciones Medallion
 Implementar capas Silver + Gold:
-- Bronze → Silver (limpieza)
-- Silver → Gold (agregaciones)
+- Bronze -> Silver (limpieza)
+- Silver -> Gold (agregaciones)
 - Lineage y gobernanza
 
-### ⏳ ETAPA 6: Documentación
+### ETAPA 6: Documentación
 Notebooks y docs finales
 
 ---
@@ -396,7 +399,7 @@ python3 scripts/setup_s3.py
 ### Spark falla con timeout
 
 Aumentar timeouts en config.yaml
-    - spark_consumer: 180 → 300 (segundos)
+    - spark_consumer: 180 -> 300 (segundos)
 
 ---
 
@@ -441,7 +444,7 @@ Las contribuciones son bienvenidas. Para cambios principales:
 
 ## 📝 Licencia
 
-Este proyecto está bajo la Licencia MIT - ver archivo [LICENSE](LICENSE) para detalles.
+Este proyecto está bajo la Licencia MIT - ver archivo [LICENSE](LICENSE) para detalles. Sino, en <https://opensource.org/license/mit>.
 
 ---
 
@@ -463,8 +466,8 @@ Este proyecto está bajo la Licencia MIT - ver archivo [LICENSE](LICENSE) para d
 
 ---
 
+## Changelog
+
+### v1.0.0
+
 **Última actualización:** Noviembre 2025
-
-## 📄 Licencia
-
-Este proyecto está bajo la licencia MIT. Ver el archivo LICENSE para más detalles. Sino, en <https://opensource.org/license/mit>.

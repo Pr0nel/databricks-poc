@@ -15,6 +15,7 @@ aws:
 kafka:
   bootstrap_servers: localhost:9092
   topic: test-events
+  encoding: utf-8
   group_id: lakehouse-poc-group
   auto_offset_reset: earliest
 
@@ -36,5 +37,7 @@ pipeline:
     setup_s3: 60          # S3 setup es rápido
     kafka_producer: 180   # 50 eventos @ 0.5s cada uno
     spark_consumer: 300   # Spark tarda en iniciar (JVM overhead)
+    spark_delta: 300      # Spark con Delta Lake
+    spark_validator: 300  # Validaciones rápidas
   max_retries: 3
-  retry_delay_base: 5    # Segundos entre reintentos
+  retry_delay_base: 5     # Segundos entre reintentos

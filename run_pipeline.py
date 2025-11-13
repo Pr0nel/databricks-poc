@@ -46,7 +46,6 @@ class PipelineOrchestrator:
         if timeout:
             logger.info(f" Timeout: {timeout} segundos")
         logger.info(f"Command: {cmd}")
-        
         try:
             if background:
                 process = subprocess.Popen(
@@ -68,17 +67,14 @@ class PipelineOrchestrator:
                 )
                 logger.info(f"{description} - COMPLETADO\n")
                 return True
-        
         except subprocess.TimeoutExpired:
             logger.error(f"{description} - TIMEOUT ({timeout}s)")
             logger.error("El comando tardó más de lo permitido\n")
             return False
-        
         except subprocess.CalledProcessError as e:
             logger.error(f"{description} - FALLÓ")
             logger.error(f"Error code: {e.returncode}\n")
             return False
-        
         except Exception as e:
             logger.error(f"{description} - ERROR: {e}\n")
             return False
@@ -97,15 +93,12 @@ class PipelineOrchestrator:
         """
         for attempt in range(1, retries + 1):
             logger.info(f"Intento {attempt}/{retries}...")
-            
             if self.run_command(cmd, description, timeout=timeout, background=background):
                 return True
-            
             if attempt < retries:
                 wait_time = RETRY_DELAY_BASE * attempt
                 logger.warning(f"Reintentando en {wait_time}s...")
                 time.sleep(wait_time)
-        
         logger.error(f"{description} - FALLÓ después de {retries} intentos\n")
         return False
     
@@ -132,8 +125,6 @@ class PipelineOrchestrator:
     def run_pipeline(self):
         """Ejecutar pipeline: Setup S3 -> Producer -> Consumer"""
         logger.info("PIPELINE - INICIANDO")
-        # time.sleep(10) # Esperando 10 segundos para que Kafka inicie completamente
-
         # PASO 1: Setup S3
         logger.info("PASO 1: Setup S3 structure")
         if not self.run_command_with_retry(
@@ -172,6 +163,35 @@ class PipelineOrchestrator:
         ):
             self.success = False
             return False
+        
+        time.sleep(2)
+
+        # PASO 4: Spark S3 Validator
+        logger.info("PASO 4: Spark write to Delta")
+        if not self.run_command_with_retry(
+            "python3 pyspark-jobs/02_spark_write_delta_s3.py",
+            "Spark write to Delta (S3 -> Delta)",
+            timeout=TIMEOUTS["spark_delta"],
+            retries=MAX_RETRIES,
+            background=False
+        ):
+            self.success = False
+            return False
+        
+        time.sleep(2)
+
+        # PASO 5: Spark S3 Validator
+        logger.info("PASO 5: Spark S3 Validator")
+        if not self.run_command_with_retry(
+            "python3 pyspark-jobs/03_spark_s3_validator.py",
+            "Spark S3 Validator",
+            timeout=TIMEOUTS["spark_validator"],
+            retries=MAX_RETRIES,
+            background=False
+        ):
+            self.success = False
+            return False
+
         self.cleanup()
         if self.success:
             logger.info("PIPELINE - COMPLETADO CON ÉXITO")
