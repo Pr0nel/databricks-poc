@@ -126,8 +126,8 @@ class InfrastructureValidator:
             }
             # Endpoint simple para verificar token
             url = f"{DATABRICKS_HOST}/api/2.0/workspace/get-status"
-            payload = {"path": "/"}
-            response = requests.get(url, headers=headers, json=payload, timeout=10)
+            params = {"path": "/"}
+            response = requests.get(url, headers=headers, params=params, timeout=10)
             if response.status_code == 200:
                 logger.info("Conexión a Databricks exitosa")
                 logger.info(f"   Host: {DATABRICKS_HOST}")

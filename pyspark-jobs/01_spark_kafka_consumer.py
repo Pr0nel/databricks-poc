@@ -72,8 +72,8 @@ class SparkKafkaConsumer:
 
             # Extraer metadata de Kafka
             df_with_kafka_meta = df_stream.select(
-                col("partition").alias("kafka_partition"),      # partición de Kafka
-                col("offset").alias("kafka_offset"),            # offset dentro de la partición
+                col("partition").alias("kafka_partition"),  # partición de Kafka
+                col("offset").alias("kafka_offset"),        # offset dentro de la partición
                 decode(col("value").cast("string"), self.encoder.encoding).alias("value_str")  # valor del mensaje como string
             )
             

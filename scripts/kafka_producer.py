@@ -106,10 +106,12 @@ class EventProducer:
         logger.info(f"   Modo: {'VALIDACIÓN (sync+async)' if validate_first else 'ASYNC'}")
         logger.info(f"   Delay entre eventos: {delay}s\n")
         for i in range(num_events):
+            #event_types = ['test_event', 'production_event', 'debug_event']
             event = {
                 "id": i,
                 "value": i * 10,
                 "type": "test_event",
+                #"type": event_types[i % len(event_types)],
                 "timestamp": int(time.time() * 1000)
             }
             # Primer evento: validar conexión

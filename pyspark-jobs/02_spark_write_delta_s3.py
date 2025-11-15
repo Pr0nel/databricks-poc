@@ -2,9 +2,10 @@
 """
 Spark Batch Job: Delta → S3
 - Lee Delta Table (batch, no streaming)
-- Validaciones básicas
+- Validaciones básicas de calidad (10 checks)
 - Escribe a S3 (Parquet, particionado por fecha)
-- Propósito: Persistir datos de Delta a S3 para durabilidad y Auto Loader (ETAPA 4)
+- Solo sube a S3 si calidad >= 70%
+- Propósito: Persistir datos de Delta a S3 para durabilidad de forma segura y confiable
 """
 import sys
 from pathlib import Path
@@ -29,7 +30,7 @@ class DeltaToS3Writer:
         self.delta_path = "delta_tables/events_raw"
         self.s3_path = S3_BRONZE
         self.spark_factory = SparkSessionFactory(logger)
-        self.data_validator = DataValidator(logger)
+        self.data_validator = DataValidator(logger, fail_on_error=False)
     
     def _init_spark(self):
         """Inicializar SparkSession con acceso a S3"""
@@ -68,19 +69,45 @@ class DeltaToS3Writer:
         except Exception as e:
             logger.error(f"Error leyendo Delta: {e}")
             return None
-    
-    def validate_data(self, df):
-        """Validaciones básicas de datos"""
-        logger.info("Ejecutando validaciones...")
-        try:
-            self.data_validator.check_nulls(df, Schemas.get_critical_columns())
-            _ = self.data_validator.get_data_statistics(df)
-            logger.info("Validaciones completadas")
-            return True
-        except Exception as e:
-            logger.warning(f"Error en validaciones: {e}")
-            return True  # No bloquear si hay error en validación
-    
+
+    def validate_data_comprehensive(self, df):
+        """
+        VALIDACIÓN ROBUSTA (10 checks)
+        Args:
+            df: DataFrame a validar
+        Returns:
+            bool: True si pasa validaciones, False si no
+        """
+        logger.info("VALIDACIÓN COMPLETA DE DATOS ANTES DE S3")
+        # Definir validaciones customizadas
+        expected_columns = Schemas.get_expected_columns()
+        critical_columns = Schemas.get_critical_columns()
+        key_columns = ["id","timestamp"]  # Para detectar duplicados
+        # Ranges numéricos esperados (ajusta según tus datos)
+        numeric_ranges = {
+            "value": (0, 1000000), # value debe estar entre 0 y 1M
+            "timestamp": (0, 9999999999999), # timestamp válido (13 dígitos)
+        }
+        # Reglas de negocio customizadas
+        event_types = ['test_event', 'production_event', 'debug_event']
+        custom_rules = {
+            "event_type_valid": lambda df: all(
+                                    t['type'] in event_types for t in df.select("type").distinct().collect()
+                                ) if "type" in df.columns else True,
+            "value_not_negative": lambda df: df.filter(col("value") < 0).count() == 0 
+                if "value" in df.columns else True,
+        }
+        is_valid = self.data_validator.run_all_checks(
+            df,
+            expected_columns=expected_columns,
+            critical_columns=critical_columns,
+            key_columns=key_columns,
+            numeric_ranges=numeric_ranges,
+            partition_col="ingestion_date",  # Si existe
+            custom_rules=custom_rules
+        )
+        return is_valid
+
     def write_to_s3(self, df):
         """Escribir DataFrame a S3 (parquet, particionado por fecha)"""
         logger.info(f"Escribiendo a S3: {self.s3_path}")
@@ -95,12 +122,14 @@ class DeltaToS3Writer:
                     logger.warning("  No hay columna de fecha, usando fecha actual")
                     df = df.withColumn("ingestion_date", current_date())
             # Escribir a S3
+            logger.info("  Iniciando escritura a S3...")
             df.write \
                 .format("parquet") \
                 .mode("overwrite") \
                 .partitionBy("ingestion_date") \
                 .save(self.s3_path)
             logger.info(f"  Datos escritos a S3 exitosamente")
+            logger.info(f"  Path: {self.s3_path}")
             return True
         except Exception as e:
             logger.error(f"Error escribiendo a S3: {e}")
@@ -119,8 +148,11 @@ class DeltaToS3Writer:
                 logger.warning("No se encontraron datos en Delta")
                 return False
             # 3. Validar datos
-            self.validate_data(df)
-            # 4. Escribir a S3
+            is_valid = self.validate_data_comprehensive(df)
+            if not is_valid:
+                logger.error("VALIDACIÓN DE DATOS FALLIDA - NO SE ESCRIBE A S3")
+                return False
+            # 4. Escribir a S3, solo si validación OK
             if not self.write_to_s3(df):
                 raise Exception("Failed writing to S3")
             logger.info("DELTA TO S3 BATCH JOB - SUCCESS")

@@ -166,7 +166,7 @@ class PipelineOrchestrator:
         
         time.sleep(2)
 
-        # PASO 4: Spark S3 Validator
+        # PASO 4: Spark write to Delta
         logger.info("PASO 4: Spark write to Delta")
         if not self.run_command_with_retry(
             "python3 pyspark-jobs/02_spark_write_delta_s3.py",

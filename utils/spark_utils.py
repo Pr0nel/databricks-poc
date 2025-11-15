@@ -37,9 +37,9 @@ class SparkSessionFactory:
             .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
             .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
             .config("spark.jars.packages", 
-                   "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,"
-                   "io.delta:delta-spark_2.12:3.1.0,"
-                   "org.apache.hadoop:hadoop-aws:3.3.4,"
+                   "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,"  # kafka
+                   "io.delta:delta-spark_2.12:3.1.0,"                   # delta lake
+                   "org.apache.hadoop:hadoop-aws:3.3.4,"                # hadoop aws
                    "com.amazonaws:aws-java-sdk-bundle:1.12.262") \
             .config("spark.sql.adaptive.enabled", "true") \
             .config("spark.sql.adaptive.coalescePartitions.enabled", "true") \
