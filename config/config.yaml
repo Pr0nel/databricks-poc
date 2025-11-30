@@ -23,6 +23,9 @@ kafka:
 databricks:
   host: ${DATABRICKS_HOST}
   token: ${DATABRICKS_TOKEN}
+  paths:
+    csv_input: "databricks_upload/*.csv"
+    delta_input: "delta_tables/events_raw"
 
 # Spark Configuration
 spark:

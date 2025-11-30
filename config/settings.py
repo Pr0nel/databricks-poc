@@ -9,7 +9,7 @@ load_dotenv()
 
 config_path = Path(__file__).parent / "config.yaml"
 with open(config_path, "r") as f:
-    config_raw = yaml.safe_load(f)
+    configurations = yaml.safe_load(f)
 
 def expand_env_vars(obj):
     """Reemplazar ${VAR} con valores de .env"""
@@ -25,7 +25,7 @@ def expand_env_vars(obj):
         return re.sub(r'\$\{([^}]+)\}', replace_var, obj)
     return obj
 
-config = expand_env_vars(config_raw)
+config = expand_env_vars(configurations)
 
 AWS_ACCESS_KEY_ID = config["aws"]["access_key_id"]
 AWS_SECRET_ACCESS_KEY = config["aws"]["secret_key"]
@@ -46,6 +46,10 @@ KAFKA_AUTO_OFFSET_RESET = config["kafka"]["auto_offset_reset"]
 
 DATABRICKS_HOST = config["databricks"]["host"]
 DATABRICKS_TOKEN = config["databricks"]["token"]
+DATABRICKS_PATHS = config["databricks"]["paths"]
+
+DATABRICKS_DELTA_PATH = DATABRICKS_PATHS["delta_input"]
+DATABRICKS_CSV_PATH = DATABRICKS_PATHS["csv_input"]
 
 SPARK_APP_NAME = config["spark"]["app_name"]
 SPARK_LOG_LEVEL = config["spark"]["log_level"]

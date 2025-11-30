@@ -3,6 +3,9 @@
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![Apache Spark 3.5.0](https://img.shields.io/badge/apache%20spark-3.5.0-orange.svg)](https://spark.apache.org/)
 [![Delta Lake 3.1.0](https://img.shields.io/badge/delta%20lake-3.1.0-red.svg)](https://delta.io/)
+[![Databricks](https://img.shields.io/badge/databricks-serverless-blue.svg)](https://databricks.com/)
+[![AWS S3](https://img.shields.io/badge/aws-s3-orange.svg)](https://aws.amazon.com/s3/)
+[![Docker](https://img.shields.io/badge/docker-containerized-blue.svg)](https://www.docker.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ## 📋 Tabla de Contenidos
@@ -29,16 +32,16 @@
 
 ## 📖 Descripción
 
-**Lakehouse POC** es una prueba de concepto que demuestra una arquitectura **data lakehouse híbrida** local + cloud, combinando:
+**Lakehouse POC** es una prueba de concepto que demuestra una arquitectura **data lakehouse híbrida** local + cloud, combinando ingesta streaming en tiempo real, almacenamiento en cloud, y transformaciones con gobernanza empresarial:
 
 - **Streaming en tiempo real** con Apache Kafka
 - **Delta Lake** para ACID transactions y time travel
-- **Arquitectura Medallion** (Bronze -> Silver -> Gold)
-- **Cloud Storage** (AWS S3)
+- **Arquitectura Medallion** (transformaciones multi-capas Bronze -> Silver -> Gold)
+- **Cloud Storage** (Persista datos en AWS S3)
 - **Databricks Integration** con Unity Catalog y Auto Loader
 - **Gobernanza de datos** y esquemas evolucionables
 
-**Propósito:** Demostrar patrones enterprise reales de ingesta, transformación y gobernanza de datos.
+**Propósito:** Demostrar patrones enterprise reales de ingesta, transformación y gobernanza de datos. Procesar eventos de aplicaciones en tiempo real, limpiarlos, enriquecerlos, y generar métricas analíticas para BI/Analytics.
 
 ---
 
@@ -77,6 +80,26 @@
 └───────────────────────────────────────────────────────────────┘
 ```
 
+### Capas Medallion
+
+**Bronze Layer (Raw Data)**
+- Datos ingresados directamente desde Kafka
+- Sin transformaciones aplicadas
+- Full lineage preservado
+- Auto Loader con schema evolution
+
+**Silver Layer (Cleaned Data)**
+- Datos validados y limpiados
+- Deduplicación por ID
+- Enriquecimiento (columnas calculadas)
+- Quality score: 90/100
+
+**Gold Layer (Business Analytics)**
+- Agregaciones por tipo, fecha, categoría
+- Vistas SQL optimizadas para BI
+- Métricas de negocio listas para consumo
+- Dashboards listos
+
 ---
 
 ## 🛠️ Stack Tecnológico
@@ -101,6 +124,8 @@
 - Docker y Docker Compose 24.0+
 - Java 11+ (para Spark)
 - pip (gestor de paquetes Python)
+- Git
+- ~20 GB de disco libre
 
 ### AWS
 
@@ -142,6 +167,7 @@ pip install -r requirements.txt
 # .env
 AWS_ACCESS_KEY_ID=your_access_key
 AWS_SECRET_ACCESS_KEY=your_secret_key
+AWS_DEFAULT_REGION=us-east-2
 AWS_S3_BUCKET=your-lakehouse-poc-bucket
 KAFKA_BOOTSTRAP_SERVERS=localhost:
 KAFKA_TOPIC=test-events
@@ -161,6 +187,9 @@ python3 config/settings.py
 
 # Verificar logging
 python3 config/logging_config.py
+
+# Verificar infraestructura
+python3 scripts/validate_infrastructure.py
 
 # Verificar Docker
 scripts/docker-helpers.sh status
@@ -186,6 +215,9 @@ scripts/docker-helpers.sh test-kafka
 ### Ejecución Completa del Pipeline
 
 ```bash
+# Validar infraestructura
+python3 scripts/validate_infrastructure.py
+
 # Asegúrate de que Docker está activo
 scripts/docker-helpers.sh dev-up
 
@@ -244,6 +276,15 @@ python3 pyspark-jobs/02_spark_delta_to_s3.py
 # Solo Validación de datos
 python3 pyspark-jobs/03_spark_s3_validator.py
 ```
+
+### Ejecutar Transformaciones en Databricks
+
+En orden:
+1. `00_init_catalog_schema.py` - Inicializar catálogo
+2. `01_auto_loader_bronze.py` - Ingestar de S3
+3. `02_silver_transformations.py` - Limpiar datos
+4. `03_gold_analytics.py` - Crear vistas
+5. `04_unity_catalog_governance.py` - Gobernanza
 
 ### Docker Commands
 
@@ -387,6 +428,9 @@ Notebooks y docs finales
 ### Kafka no responde
 
 ```bash
+# Verificar Docker
+docker ps
+
 # Reset completo de Docker
 scripts/docker-helpers.sh reset-dev
 
@@ -404,12 +448,38 @@ cat .env
 
 # Validar acceso S3
 python3 scripts/setup_s3.py
+#o
+aws s3 ls
+
+# Si no funciona, regenerar credenciales en AWS Console
 ```
 
 ### Spark falla con timeout
 
 Aumentar timeouts en config.yaml
     - spark_consumer: 180 -> 300 (segundos)
+
+### Error: "Databricks connection failed"
+
+```bash
+# Verificar token
+# Ir a Databricks Settings → Generate New Token
+# Copiar nuevo token a .env
+
+# Verificar URL
+# Debe ser: https://your-workspace.cloud.databricks.com
+# NO: https://your-workspace.cloud.databricks.com/
+```
+
+### Error: "Table not found in Databricks"
+
+```sql
+-- Verificar catálogos y esquemas
+SHOW CATALOGS;
+SHOW SCHEMAS IN main;
+
+-- Si no existen, ejecutar 00_init_catalog_schema.py primero
+```
 
 ---
 
@@ -472,7 +542,9 @@ Este proyecto está bajo la Licencia MIT - ver archivo [LICENSE](LICENSE) para d
 
 - [ ] Agregar tests unitarios
 - [ ] Documentar transformaciones de negocios
+- [ ] Agregar screenshots de ejecución
 - [ ] Configurar CI/CD con GitHub Actions
+- [ ] Escalar a millones de eventos
 
 ---
 
